@@ -55,7 +55,7 @@
 
 #include "ti_154stack_config.h"
 #include "api_mac.h"
-
+#include <ti/drivers/UART.h>
 #ifdef OSAL_PORT2TIRTOS
 #include <ti/sysbios/knl/Task.h>
 #endif
@@ -88,6 +88,8 @@ extern "C"
 #define COLLECTOR_OPEN_NWK_EVT            0x0040
 /*! Event ID - Close Network Event */
 #define COLLECTOR_CLOSE_NWK_EVT           0x0080
+
+#define COLLECTOR_SEND_Config_Data        0x1000
 
 #ifdef DMM_OAD
 /*! Event ID - Pause 154 Collector */
@@ -289,6 +291,12 @@ extern Collector_status_t Collector_sendConfigRequest(ApiMac_sAddr_t *pDstAddr,
  */
 extern void Collector_updateStats( void );
 
+/*!
+ * @brief initialize the UART
+ */
+
+UART_Handle UART_INIT(void);
+static void UartWriteCallback(UART_Handle _handle, void *_buf, size_t _size);
 /*!
  * @brief Build and send the toggle led message to a device.
  *

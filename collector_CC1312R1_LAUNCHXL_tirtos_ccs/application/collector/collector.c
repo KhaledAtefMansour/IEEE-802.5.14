@@ -179,7 +179,7 @@ extern bool permitJoining;
 /******************************************************************************
  Local variables
  *****************************************************************************/
-
+UART_Handle gUartHandle = NULL;
 static void *sem;
 
 /*! true if the device was restarted */
@@ -378,10 +378,61 @@ static DMMPolicy_AppCbs_t dmmPolicyAppCBs =
 };
 #endif
 
-
+static uint8_t UartReceiveBuffer[20]={0};
 /******************************************************************************
  Public Functions
  *****************************************************************************/
+uint8_t rxbuffer[1];
+void CollectorReadCallback(UART_Handle handle, void *buf, size_t size)
+{
+    static uint16_t i=0;
+          // Make sure we received all expected bytes
+          if (size)
+          {
+                  // Copy bytes from RX buffer to TX buffer
+               //   for(size_t i = 0; i < _size; i++)
+               //   {
+             UartReceiveBuffer[i++] = ((uint8_t*)buf)[0];
+               //   }
+            if(((uint8_t*)buf)[0]=='_')
+            {
+               UART_write(gUartHandle, UartReceiveBuffer, i);   //(const void*)
+               i=0;
+               memset(UartReceiveBuffer, '\0', sizeof(UartReceiveBuffer));
+            }
+          }
+          else
+          {
+              // Handle error or call to UART_readCancel()
+              UART_readCancel(gUartHandle);
+          }
+          UART_read(gUartHandle, (uint8_t*)buf, 1);   //gUartHandle
+
+}
+UART_Handle UART_INIT(void){
+    UART_Params gUartParams;
+    // General UART setup
+    UART_init();
+    UART_Params_init(&gUartParams);
+    gUartParams.baudRate = 115200;
+    gUartParams.writeMode     = UART_MODE_BLOCKING;
+    gUartParams.writeDataMode = UART_DATA_BINARY;
+
+    gUartParams.readMode      = UART_MODE_CALLBACK;
+    gUartParams.readDataMode  = UART_DATA_BINARY;
+    gUartParams.readEcho      = UART_ECHO_OFF;
+    gUartParams.readCallback  = CollectorReadCallback;
+
+    gUartHandle = UART_open(0, &gUartParams);
+
+    if (gUartHandle !=NULL)
+     {
+       UART_read(gUartHandle, rxbuffer, 1);
+       //UART_control(gUartHandle, 32, NULL);
+     }
+    return gUartHandle;
+}
+
 
 /*!
  Initialize this application.
@@ -394,6 +445,8 @@ void Collector_init(uint8_t macTaskId)
 void Collector_init(void)
 #endif
 {
+    gUartHandle = UART_INIT();
+
     /* Initialize the collector's statistics */
     memset(&Collector_statistics, 0, sizeof(Collector_statistics_t));
 
@@ -527,6 +580,7 @@ void Collector_process(void)
         {
             processStartEvent();
         }
+        Csf_openNwk();
         /* Clear the event */
         Util_clearEvent(&Collector_events, COLLECTOR_START_EVT);
     }
@@ -551,7 +605,7 @@ void Collector_process(void)
     if(Collector_events & COLLECTOR_TRACKING_TIMEOUT_EVT)
     {
         /* Process Tracking Event */
-        generateTrackingRequests();
+        //generateTrackingRequests();
 
         /* Clear the event */
         Util_clearEvent(&Collector_events, COLLECTOR_TRACKING_TIMEOUT_EVT);
@@ -1412,8 +1466,23 @@ static void dataCnfCB(ApiMac_mcpsDataCnf_t *pDataCnf)
  *
  * @param      pDataInd - pointer to the data indication information
  */
+uint8_t data[2] = {0};
 static void dataIndCB(ApiMac_mcpsDataInd_t *pDataInd)
 {
+ //   UART_write(gUartHandle, (uint8_t*)data,5);
+   data[0] = ((pDataInd->srcAddr.addr.shortAddr)>>8);
+   data[1] = ((pDataInd->srcAddr.addr.shortAddr));
+    //UART_write(gUartHandle, data,2);
+    //UART_write(gUartHandle, (uint16_t*)&(pDataInd->srcAddr.addr.shortAddr), sizeof(pDataInd->srcAddr.addr.shortAddr));
+ //  for(i=0;i<pDataInd->msdu.len;i++)
+ //  {
+ //      data[2*i] = ((pDataInd->msdu.p[i]) >> 4);
+ //      data[2*i+1] = (pDataInd->msdu.p[i]) & 0x0F;
+ //  }
+
+   UART_write(gUartHandle, (const void*)data, 2 /*i-1*/);
+   UART_write(gUartHandle, &(pDataInd->msdu.len), 2);
+   UART_write(gUartHandle, (const void*)pDataInd->msdu.p, pDataInd->msdu.len);
     if((pDataInd != NULL) && (pDataInd->msdu.p != NULL)
        && (pDataInd->msdu.len > 0))
     {
