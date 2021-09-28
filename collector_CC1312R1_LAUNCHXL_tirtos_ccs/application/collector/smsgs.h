@@ -209,8 +209,6 @@ The <b>Sensor Ramp Data Message</b> is defined as:
 #define SMSGS_DEVICE_TYPE_RESPONSE_MSG_LEN 3
 /*! Length of a BLE Device Address */
 #define B_ADDR_LEN 6
-/*! Identify data message length (over-the-air length) */
-#define SMSGS_INDENTIFY_Data_MSG_LEN 20
 /*! Length of the ble sensor portion of the sensor data length not including variable data field */
 #define SMSGS_SENSOR_BLE_LEN 5 + B_ADDR_LEN
 /* Max BLE Data Length */
@@ -255,9 +253,7 @@ The <b>Sensor Ramp Data Message</b> is defined as:
     /* Device type request msg */
     Smsgs_cmdIds_DeviceTypeReq = 16,
     /* Device type response msg */
-    Smsgs_cmdIds_DeviceTypeRsp = 17,
-    /* Data msg */
-    Smsgs_cmdIds_DataMsg = 18
+    Smsgs_cmdIds_DeviceTypeRsp = 17
 
  } Smsgs_cmdIds_t;
 

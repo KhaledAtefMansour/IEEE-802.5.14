@@ -77,6 +77,9 @@
 /******************************************************************************
  Constants and definitions
  *****************************************************************************/
+UART_Handle gUartHandle = NULL;
+static uint8_t UartReceiveBuffer[20]={0};
+uint8_t rxbuffer[1];
 
 #if !defined(STATIC)
 /* make local */
@@ -179,7 +182,7 @@ extern bool permitJoining;
 /******************************************************************************
  Local variables
  *****************************************************************************/
-UART_Handle gUartHandle = NULL;
+
 static void *sem;
 
 /*! true if the device was restarted */
@@ -235,6 +238,7 @@ static uint8_t getMsduHandle(Smsgs_cmdIds_t msgType);
 static bool sendMsg(Smsgs_cmdIds_t type, uint16_t dstShortAddr, bool rxOnIdle,
                     uint16_t len,
                     uint8_t *pData);
+void SendConfigRequests(uint32_t Reporting,uint32_t Pooling);
 static void generateConfigRequests(void);
 static void generateTrackingRequests(void);
 static void generateBroadcastCmd(void);
@@ -378,11 +382,17 @@ static DMMPolicy_AppCbs_t dmmPolicyAppCBs =
 };
 #endif
 
-static uint8_t UartReceiveBuffer[20]={0};
+
 /******************************************************************************
  Public Functions
  *****************************************************************************/
-uint8_t rxbuffer[1];
+
+/*!
+ Initialize this application.
+
+ Public function defined in collector.h
+ */
+uint8_t counter =0;
 void CollectorReadCallback(UART_Handle handle, void *buf, size_t size)
 {
     static uint16_t i=0;
@@ -398,6 +408,11 @@ void CollectorReadCallback(UART_Handle handle, void *buf, size_t size)
             {
                UART_write(gUartHandle, UartReceiveBuffer, i);   //(const void*)
                i=0;
+             //  uint32_t Reporting =(UartReceiveBuffer[0]-48)*1000;
+             //  uint32_t Pooling = (UartReceiveBuffer[1]-48)*1000;
+               //counter = 2;
+             //  generateConfigRequests();
+               SendConfigRequests(9000,9000);
                memset(UartReceiveBuffer, '\0', sizeof(UartReceiveBuffer));
             }
           }
@@ -432,13 +447,6 @@ UART_Handle UART_INIT(void){
      }
     return gUartHandle;
 }
-
-
-/*!
- Initialize this application.
-
- Public function defined in collector.h
- */
 #ifdef OSAL_PORT2TIRTOS
 void Collector_init(uint8_t macTaskId)
 #else
@@ -446,7 +454,6 @@ void Collector_init(void)
 #endif
 {
     gUartHandle = UART_INIT();
-
     /* Initialize the collector's statistics */
     memset(&Collector_statistics, 0, sizeof(Collector_statistics_t));
 
@@ -605,7 +612,7 @@ void Collector_process(void)
     if(Collector_events & COLLECTOR_TRACKING_TIMEOUT_EVT)
     {
         /* Process Tracking Event */
-        //generateTrackingRequests();
+     //   generateTrackingRequests();
 
         /* Clear the event */
         Util_clearEvent(&Collector_events, COLLECTOR_TRACKING_TIMEOUT_EVT);
@@ -1466,23 +1473,9 @@ static void dataCnfCB(ApiMac_mcpsDataCnf_t *pDataCnf)
  *
  * @param      pDataInd - pointer to the data indication information
  */
-uint8_t data[2] = {0};
 static void dataIndCB(ApiMac_mcpsDataInd_t *pDataInd)
 {
- //   UART_write(gUartHandle, (uint8_t*)data,5);
-   data[0] = ((pDataInd->srcAddr.addr.shortAddr)>>8);
-   data[1] = ((pDataInd->srcAddr.addr.shortAddr));
-    //UART_write(gUartHandle, data,2);
-    //UART_write(gUartHandle, (uint16_t*)&(pDataInd->srcAddr.addr.shortAddr), sizeof(pDataInd->srcAddr.addr.shortAddr));
- //  for(i=0;i<pDataInd->msdu.len;i++)
- //  {
- //      data[2*i] = ((pDataInd->msdu.p[i]) >> 4);
- //      data[2*i+1] = (pDataInd->msdu.p[i]) & 0x0F;
- //  }
-
-   UART_write(gUartHandle, (const void*)data, 2 /*i-1*/);
-   UART_write(gUartHandle, &(pDataInd->msdu.len), 2);
-   UART_write(gUartHandle, (const void*)pDataInd->msdu.p, pDataInd->msdu.len);
+    UART_write(gUartHandle, (const void*)pDataInd->msdu.p, pDataInd->msdu.len);
     if((pDataInd != NULL) && (pDataInd->msdu.p != NULL)
        && (pDataInd->msdu.len > 0))
     {
@@ -2262,15 +2255,53 @@ void generateIndirectRampMsg()
 }
 #endif
 
+
+void SendConfigRequests(uint32_t Reporting,uint32_t Pooling)
+{
+    int x;
+
+    /* Make sure we are only sending one config request at a time */
+    if(findDeviceStatusBit(ASSOC_CONFIG_MASK, ASSOC_CONFIG_SENT) == NULL)
+    {
+        /* Run through all of the devices */
+        for(x = 0; x < CONFIG_MAX_DEVICES; x++)
+        {
+            /* Make sure the entry is valid. */
+            if((Cllc_associatedDevList[x].shortAddr != CSF_INVALID_SHORT_ADDR)
+               && (Cllc_associatedDevList[x].status & CLLC_ASSOC_STATUS_ALIVE))
+            {
+                ApiMac_sAddr_t dstAddr;
+                Collector_status_t stat;
+
+                /* Set up the destination address */
+                dstAddr.addrMode = ApiMac_addrType_short;
+                dstAddr.addr.shortAddr =
+                Cllc_associatedDevList[x].shortAddr;
+
+                uint8_t data[3]= {'N','E','W'};
+                UART_write(gUartHandle, data, 3);
+                /* Send the Config Request */
+                stat = Collector_sendConfigRequest(
+                                &dstAddr, (CONFIG_FRAME_CONTROL),
+                                Reporting,
+                                Pooling);
+                  /* Only do one at a time */
+                  return;
+            }
+        }
+    }
+}
 /*!
  * @brief      Generate Config Requests for all associate devices
  *             that need one.
  */
 static void generateConfigRequests(void)
 {
+
+    uint8_t data[3]= {'C','F','G'};
+    UART_write(gUartHandle, data, 3);
 #ifndef POWER_MEAS
     int x;
-
     if(CERTIFICATION_TEST_MODE)
     {
         /* In Certification mode only back to back uplink
@@ -2309,10 +2340,13 @@ static void generateConfigRequests(void)
                 /*
                  Has the device been sent or already received a config request?
                  */
-                if(((status & (ASSOC_CONFIG_SENT | ASSOC_CONFIG_RSP)) == 0))
-                {
+                if(((status & (ASSOC_CONFIG_SENT | ASSOC_CONFIG_RSP)) == 0) || (counter ==2) )
+               {
+                    //counter++;
                     ApiMac_sAddr_t dstAddr;
                     Collector_status_t stat;
+
+
 
                     /* Set up the destination address */
                     dstAddr.addrMode = ApiMac_addrType_short;

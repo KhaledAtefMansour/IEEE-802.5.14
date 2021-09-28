@@ -247,10 +247,10 @@ application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/kernel/tirtos/
 application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/kernel/tirtos/packages/ti/sysbios/family/arm/m3/Hwi__epilogue.h
 application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/kernel/tirtos/packages/ti/sysbios/hal/package/Hwi_HwiProxy.h
 application/main.obj: C:/Users/Khaled/workspace_v10/collector_CC1312R1_LAUNCHXL_tirtos_ccs/application/collector/collector.h
+application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/source/ti/drivers/UART.h
 application/main.obj: syscfg/ti_154stack_config.h
 application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/source/ti/ti154stack/common/osal_port/api_mac.h
 application/main.obj: syscfg/ti_154stack_features.h
-application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/source/ti/drivers/UART.h
 application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/kernel/tirtos/packages/ti/sysbios/knl/Task.h
 application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/source/ti/ti154stack/common/inc/macconfig.h
 application/main.obj: C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/source/ti/common/nv/nvintf.h
@@ -819,13 +819,13 @@ C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/kernel/tirtos/packages/ti/sysbios/ha
 
 C:/Users/Khaled/workspace_v10/collector_CC1312R1_LAUNCHXL_tirtos_ccs/application/collector/collector.h:
 
+C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/source/ti/drivers/UART.h:
+
 syscfg/ti_154stack_config.h:
 
 C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/source/ti/ti154stack/common/osal_port/api_mac.h:
 
 syscfg/ti_154stack_features.h:
-
-C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/source/ti/drivers/UART.h:
 
 C:/ti/simplelink_cc13x2_26x2_sdk_5_20_00_52/kernel/tirtos/packages/ti/sysbios/knl/Task.h:
 

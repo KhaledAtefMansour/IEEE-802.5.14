@@ -172,6 +172,7 @@ Smsgs_msgStatsField_t Sensor_msgStats =
     { 0 };
 extern bool initBroadcastMsg;
 extern bool parentFound;
+
 #ifdef POWER_MEAS
 /*! Power Meas Stats fields */
 Smsgs_powerMeastatsField_t Sensor_pwrMeasStats =
@@ -180,11 +181,12 @@ Smsgs_powerMeastatsField_t Sensor_pwrMeasStats =
 /******************************************************************************
  Local variables
  *****************************************************************************/
+
 UART_Handle gUartHandle = NULL;
 uint8_t UartReceiveBuffer[300];
 uint16_t UartReceiveBufferLength = 0;
 uint8_t rxbuffer[1];
-
+unsigned int retries = 0;
 static void *sem;
 
 /*! Rejoined flag */
@@ -441,7 +443,7 @@ static DMMPolicy_AppCbs_t dmmPolicyAppCBs =
 #endif
 /******************************************************************************
  Public Functions
-{ *****************************************************************************/
+ *****************************************************************************/
 static void SensorReadCallback(UART_Handle handle, void *buf, size_t size)
 {
     static uint16_t i=0;
@@ -792,17 +794,21 @@ void Sensor_process(void)
 
     if(Sensor_events & SENSOR_UART_READING_EVT)
        {
-        Sensor_sendData(UartReceiveBuffer,UartReceiveBufferLength);
-        UartReceiveBufferLength = 0;
-        memset(UartReceiveBuffer, '\0', sizeof(UartReceiveBuffer));
-        Util_clearEvent(&Sensor_events, SENSOR_UART_READING_EVT);
+        uint8_t Start[8]= {'S','T','A','R','T','I','N','G'};
+        UART_write(gUartHandle, Start, 8);
+        uint8_t data[8] = {'0','0','1','1','1','1','0','0'};
+        for(uint16_t i=0;i<1000;i++)
+        {
+            Sensor_sendData(data,8);
+        }
+        uint8_t End[5]= {'E','N','D','E','D'};
+        UART_write(gUartHandle, End, 5);
        }
     /* Is it time to send the next sensor data message? */
-
     if(Sensor_events & SENSOR_READING_TIMEOUT_EVT)
     {
-        uint8_t test[4] = {'d','a','t','a'};
-        Sensor_sendData(test,4);
+        uint8_t data[4]= {'D','A','T','A'};
+        UART_write(gUartHandle, data, 4);
 
 #if !defined(OAD_IMG_A)
 
@@ -810,7 +816,7 @@ void Sensor_process(void)
         if(!CERTIFICATION_TEST_MODE)
         {
             /* Setup for the next message */
-          Ssf_setReadingClock(configSettings.reportingInterval);
+            Ssf_setReadingClock(configSettings.reportingInterval);
         }
 
 #ifdef FEATURE_SECURE_COMMISSIONING
@@ -1044,6 +1050,7 @@ bool Sensor_sendMsg(Smsgs_cmdIds_t type, ApiMac_sAddr_t *pDstAddr,
     }
     else
     {
+        retries++;
         /* handle transaction overflow by retrying */
         if(type == Smsgs_cmdIds_sensorData || type == Smsgs_cmdIds_rampdata)
         {
@@ -1079,7 +1086,6 @@ void Sensor_sendData(uint8_t *dataBytes,uint16_t len)
             len,
             dataBytes);
 }
-
 #ifdef FEATURE_SECURE_COMMISSIONING
 /*!
  * @brief Sets the Security Authentication Mode
@@ -1284,7 +1290,9 @@ static void dataCnfCB(ApiMac_mcpsDataCnf_t *pDataCnf)
 
 static void dataIndCB(ApiMac_mcpsDataInd_t *pDataInd)
 {
+    UART_write(gUartHandle, (const void*)pDataInd->msdu.p, pDataInd->msdu.len);
     uint8_t cmdBytes[SMSGS_TOGGLE_LED_RESPONSE_MSG_LEN];
+
     if((pDataInd != NULL) && (pDataInd->msdu.p != NULL)
        && (pDataInd->msdu.len > 0))
     {
@@ -1299,7 +1307,6 @@ static void dataIndCB(ApiMac_mcpsDataInd_t *pDataInd)
             }
         }
 #endif /* FEATURE_MAC_SECURITY */
-
         switch(cmdId)
         {
             case Smsgs_cmdIds_configReq:

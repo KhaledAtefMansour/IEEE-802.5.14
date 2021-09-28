@@ -13,6 +13,6 @@
 	<ignoreDefaultDeviceSettings value="true"/>
 	<ignoreDefaultCCSSettings value="true"/>
 	<templateProperties value="id=collector_CC1312R1_LAUNCHXL_tirtos_ccs.projectspec.collector_CC1312R1_LAUNCHXL_tirtos_ccs,type=rtsc,xdcToolsVersion=3.62.00.08,target=ti.targets.arm.elf.M4F,platform=ti.platforms.simplelink:CC1312R1F3,buildProfile=release,isHybrid=true,configuroOptions= --compileOptions &quot;${COMPILER_FLAGS} &quot;"/>
-	<origin value="C:/Users/Khaled/Desktop/ElSewedy Internship/Star_code/V2.0/collector_CC1312R1_LAUNCHXL_tirtos_ccs"/>
+	<origin value="C:\ti\simplelink_cc13x2_26x2_sdk_5_20_00_52\examples\rtos\CC1312R1_LAUNCHXL\ti154stack\collector\tirtos\ccs\collector_CC1312R1_LAUNCHXL_tirtos_ccs.projectspec"/>
 	<filesToOpen value=""/>
 </projectOptions>

@@ -73,8 +73,7 @@ extern "C"
 #define SENSOR_START_EVT 0x0001
 /*! Event ID - Reading Timeout Event */
 #define SENSOR_READING_TIMEOUT_EVT 0x0002
-
-#define SENSOR_UART_READING_EVT 0x1000
+#define SENSOR_UART_READING_EVT    0x1000
 
 #ifdef FEATURE_NATIVE_OAD
 /*! Event ID - OAD Timeout Event */
@@ -193,6 +192,7 @@ extern bool Sensor_sendMsg(Smsgs_cmdIds_t type, ApiMac_sAddr_t *pDstAddr,
  * @brief Send identify LED request to collector
  */
 extern void Sensor_sendIdentifyLedRequest(void);
+
 
 void Sensor_sendData(uint8_t *dataBytes,uint16_t len);
 

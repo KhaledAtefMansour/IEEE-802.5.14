@@ -254,7 +254,7 @@ The <b>Sensor Ramp Data Message</b> is defined as:
     Smsgs_cmdIds_DeviceTypeReq = 16,
     /* Device type response msg */
     Smsgs_cmdIds_DeviceTypeRsp = 17,
-    /* Device send General Data */
+
     Smsgs_cmdIds_GeneralData = 18
 
  } Smsgs_cmdIds_t;
